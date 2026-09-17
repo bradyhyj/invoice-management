@@ -7,6 +7,21 @@
   let month = String(now.getMonth() + 1).padStart(2, "0");
   let day = String(now.getDate()).padStart(2, "0");
 
+  // 도장 이미지 (Base64)
+  let stampImg = "";
+
+  // 도장 이미지 업로드 처리 함수
+  function handleStampUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        stampImg = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   // 공급자 정보
   let supplier = {
     bizNum: "123-45-67890",
@@ -229,6 +244,7 @@
                   />
                 </td>
               </tr>
+              <!-- 상호 및 성명 입력 줄 전체 -->
               <tr>
                 <td class="border border-black py-1 text-[11px] tracking-tight"
                   >상호(법인명)</td
@@ -240,16 +256,49 @@
                     class="w-full text-center outline-none"
                   />
                 </td>
+
                 <td
                   class="border border-black w-10 text-[11px] tracking-[0.2em]"
                   >성 명</td
                 >
-                <td class="border border-black">
+                <td class="border border-black relative overflow-hidden">
+                  <!-- 1. 도장 이미지 -->
+                  <div
+                    class="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 z-0 flex items-center justify-center pointer-events-none"
+                  >
+                    {#if stampImg}
+                      <img
+                        src={stampImg}
+                        alt="도장"
+                        class="w-full h-full object-contain opacity-85"
+                      />
+                    {:else}
+                      <span
+                        class="text-[10px] text-slate-300 print:text-black print:font-bold"
+                        >(인)</span
+                      >
+                    {/if}
+                  </div>
+
+                  <!-- 2. 이름 입력칸 -->
                   <input
                     type="text"
                     bind:value={supplier.boss}
-                    class="w-full text-center outline-none"
+                    class="w-full h-full text-center outline-none bg-transparent relative z-10 font-bold"
                   />
+
+                  <!-- 3. 업로드 버튼 -->
+                  <label
+                    class="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 z-20 cursor-pointer rounded-full hover:bg-slate-200/50 transition-colors"
+                    title="클릭하여 도장 이미지 업로드"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      class="hidden"
+                      on:change={handleStampUpload}
+                    />
+                  </label>
                 </td>
               </tr>
               <tr>
