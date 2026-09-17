@@ -108,7 +108,7 @@
         <!-- 상단 툴바 -->
         <div class="flex justify-between items-center mb-6 print:hidden">
             <div>
-                <!-- 💡 type에 따라 툴바 제목 변경 -->
+                <!-- type에 따라 툴바 제목 변경 -->
                 <h1 class="text-2xl font-bold text-slate-900">
                     {type === "invoice" ? "거래명세서 작성기" : "견적서 작성기"}
                 </h1>
@@ -134,7 +134,7 @@
             <div class="flex justify-between items-end mb-3">
                 <div class="w-32"></div>
                 <div class="text-center flex-1 pt-2">
-                    <!-- 💡 type에 따라 문서 제목 변경 -->
+                    <!-- type에 따라 문서 제목 변경 -->
                     <h2
                         class="text-[26px] font-bold tracking-[0.45em] text-black inline-block border-b-4 border-double border-black pb-1 px-2"
                     >
@@ -245,12 +245,46 @@
                                     class="border border-black w-10 text-[11px] tracking-[0.2em]"
                                     >성 명</td
                                 >
-                                <td class="border border-black">
+                                <td
+                                    class="border border-black relative overflow-hidden"
+                                >
+                                    <!-- 도장 이미지 -->
+                                    <div
+                                        class="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 z-0 flex items-center justify-center pointer-events-none"
+                                    >
+                                        {#if stampImg}
+                                            <img
+                                                src={stampImg}
+                                                alt="도장"
+                                                class="w-full h-full object-contain opacity-85"
+                                            />
+                                        {:else}
+                                            <span
+                                                class="text-[10px] text-slate-300 print:text-black print:font-bold"
+                                                >(인)</span
+                                            >
+                                        {/if}
+                                    </div>
+
+                                    <!-- 이름 입력칸 -->
                                     <input
                                         type="text"
                                         bind:value={supplier.boss}
-                                        class="w-full text-center outline-none"
+                                        class="w-full h-full text-center outline-none bg-transparent relative z-10 font-bold"
                                     />
+
+                                    <!-- 업로드 버튼) -->
+                                    <label
+                                        class="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 z-20 cursor-pointer rounded-full hover:bg-slate-200/50 transition-colors"
+                                        title="클릭하여 도장 이미지 업로드"
+                                    >
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            class="hidden"
+                                            on:change={handleStampUpload}
+                                        />
+                                    </label>
                                 </td>
                             </tr>
                             <tr>
