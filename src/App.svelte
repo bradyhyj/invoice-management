@@ -223,7 +223,7 @@
         <!-- 오른쪽: 공급자 표 -->
         <div class="flex-shrink-0">
           <table
-            class="w-[360px] border-collapse border-2 border-black text-sm text-center bg-white table-fixed"
+            class="w-[370px] border-collapse border-2 border-black text-sm text-center bg-white table-fixed"
           >
             <tbody>
               <tr>
