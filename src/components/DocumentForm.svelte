@@ -10,6 +10,9 @@
     export let items;
     export let bottomRemark;
     export let stampImg;
+    export let isLocked = false; // 부모 App.svelte에서 잠금 상태를 내려받음
+    export let discountRowIndex = -1;
+    export let roundingRowIndex = -1;
 
     // --- 아래는 템플릿 내부에서만 쓰는 화면용 로직 (그대로 유지) ---
 
@@ -24,10 +27,11 @@
         }
     }
 
-    // 💡 (할인/끝수 락 로직은 부모로 뺄 수도 있지만, 화면 제어를 위해 일단 유지)
-    let appliedDiscountIndex = -1;
-    let appliedRoundingIndex = -1;
-    $: isLocked = appliedDiscountIndex !== -1 || appliedRoundingIndex !== -1;
+    // 할인/끝수 락 로직은 부모로 뺄 수도 있지만, 화면 제어를 위해 일단 유지하였으나
+    // 아래 변수는 이제 App.svelte에서 관리함
+    // let appliedDiscountIndex = -1;
+    // let appliedRoundingIndex = -1;
+    // $: isLocked = appliedDiscountIndex !== -1 || appliedRoundingIndex !== -1;
 
     function clearItem(index) {
         items[index] = {
@@ -425,10 +429,8 @@
                     <tbody>
                         {#each items as item, i}
                             <tr
-                                class={i === appliedDiscountIndex ||
-                                i === appliedRoundingIndex
-                                    ? "text-red-600 bg-red-50/30"
-                                    : ""}
+                                class={i === discountRowIndex || i === roundingRowIndex
+                                ? 'text-red-600 bg-red-50/30' : ''}
                             >
                                 <td
                                     class="border border-black px-1 py-1 align-middle"
