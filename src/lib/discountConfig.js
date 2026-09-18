@@ -19,6 +19,7 @@ export const discountPolicies = {
       type: "POINT_INPUT", // 고객이 직접 포인트를 입력하는 방식
       minUsage: 1000, // 최소 1000원 이상부터
       maxUsagePercent: 30, // 전액 결제 가능 여부
+      pointUnit: 1, // 포인트 사용 단위
       requiresItemSelection: false, // 💡 품목 선택 없이 총액에서 바로 깎는가? -> O
       warningMessage: "고객님께 현재 포인트가 얼마나 있는지를 확인해주세요.",
     },
@@ -30,6 +31,7 @@ export const discountPolicies = {
       type: "POINT_INPUT",
       minUsage: 1000, // 최소 1000원 이상부터
       maxUsagePercent: 50, // 전액 결제 가능 여부
+      pointUnit: 100,
       requiresItemSelection: false, // 💡 품목 선택 없이 총액에서 바로 깎는가? -> O
       warningMessage: "고객님께 현재 포인트가 얼마나 있는지를 확인해주세요.",
     },
@@ -41,6 +43,7 @@ export const discountPolicies = {
       type: "POINT_INPUT",
       minUsage: 1000, // 최소 1000원 이상부터
       maxUsagePercent: 50, // 전액 결제 가능 여부
+      pointUnit: 100,
       requiresItemSelection: false, // 💡 품목 선택 없이 총액에서 바로 깎는가? -> O
       warningMessage: "고객님께 현재 포인트가 얼마나 있는지를 확인해주세요.",
     },

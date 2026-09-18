@@ -1,7 +1,9 @@
 <script>
   // @ts-nocheck <- 타입 검사 중지
   import DocumentForm from "./components/DocumentForm.svelte";  // 만든 공통 컴포넌트 불러오기
+  import DiscountModal from "./components/DiscountModal.svelte"; // 할인 공통 컴포넌트 불러오기
   import { discountPolicies } from "./lib/discountConfig.js"; // 할인 정책 JSON 불러오기
+    import { Disc } from "lucide-svelte";
 
   // 1. 데이터(상태) 선언부
   const now = new Date();
@@ -81,13 +83,40 @@
     items = [...items]; // Svelte 화면 갱신
   }
 
-  // 할인 버튼 클릭 핸들러
+  // 할인 모달 상태 및 핸들러
+  let showDiscountModal = false;
+  let selectedPolicy = null;
+
   function handleDiscountClick(policy) {
     if (isLocked) return alert("이미 다른 할인이 적용되어 있습니다. 먼저 취소해주세요.");
+  
+    // 모달에 정책 데이터 넣고 창 띄우기
+    selectedPolicy = policy;
+    showDiscountModal = true;
+  }
+
+  // 모달에서 '할인 적용하기'를 눌렀을 때 실행될 함수
+  function applyDiscountToForm(discountData) {
+    const idx = getEmptyRowIndex();
+    if(idx === -1) {
+      alert("명세서에 빈 칸이 없어 할인을 추가할 수 없습니다.");
+      return;
+    }
     
-    // TODO: 다음 단계에서 팝업창을 띄우는 로직으로 교체할 예정
-    console.log("선택된 할인:", policy);
-    alert(`[${policy.name}] 적용 준비!\n\n가이드: ${policy.warningMessage}`);
+    items[idx] = {
+      name: discountData.name,
+      spec: "",
+      qty: 1,
+      price: discountData.amount,
+      amount: discountData.amount,
+      note: "할인적용",
+      isDiscountable: false
+    };
+
+    items = [...items]; // Svelte 갱신
+    discountRowIndex = idx; // 잠금
+    showDiscountModal = false;
+
   }
 
   // 할인 취소 기능
@@ -184,3 +213,7 @@
   {discountRowIndex}
   {roundingRowIndex}
 />
+<!-- 할인 팝업 -->
+ {#if showDiscountModal}
+    <DiscountModal policy={selectedPolicy} {items} onClose={() => showDiscountModal = false} onApply={applyDiscountToForm} />
+{/if}

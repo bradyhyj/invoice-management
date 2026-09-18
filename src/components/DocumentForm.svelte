@@ -442,44 +442,56 @@
                                         class="cell-input w-full min-h-[24px] outline-none bg-transparent text-center resize-none disabled:bg-transparent"
                                     ></textarea>
                                 </td>
+
+                                <!--
+                                    할인 적용된 행의 경우 금액만 나타낸다 {#if i !== discountRowIndex }
+                                    item의 spec, qty, price에만 조건 달면 됨
+                                -->
                                 <td class="border border-black px-1 h-[29px]">
-                                    <input
-                                        type="text"
-                                        bind:value={item.spec}
-                                        disabled={isLocked}
-                                        class="w-full h-full outline-none bg-transparent text-center disabled:bg-transparent"
-                                    />
+                                    {#if i !== discountRowIndex}
+                                        <input
+                                            type="text"
+                                            bind:value={item.spec}
+                                            disabled={isLocked}
+                                            class="w-full h-full outline-none bg-transparent text-center disabled:bg-transparent "
+                                        />
+                                    {/if}
                                 </td>
                                 <td class="border border-black px-1 h-[29px]">
-                                    <input
-                                        type="number"
-                                        bind:value={item.qty}
-                                        disabled={isLocked}
-                                        class="w-full h-full outline-none bg-transparent text-center disabled:bg-transparent"
-                                    />
+                                    {#if i !== discountRowIndex}
+                                        <input
+                                            type="number"
+                                            bind:value={item.qty}
+                                            disabled={isLocked}
+                                            class="w-full h-full outline-none bg-transparent text-center disabled:bg-transparent"
+                                        />
+                                    {/if}
                                 </td>
                                 <td class="border border-black px-1 h-[29px]">
-                                    <input
-                                        type="number"
-                                        bind:value={item.price}
-                                        step="100"
-                                        disabled={isLocked}
-                                        class="w-full h-full outline-none bg-transparent text-right disabled:bg-transparent"
-                                    />
+                                    {#if i !== discountRowIndex}
+                                        <input
+                                            type="number"
+                                            bind:value={item.price}
+                                            step="100"
+                                            disabled={isLocked}
+                                            class="w-full h-full outline-none bg-transparent text-right disabled:bg-transparent"
+                                        />
+                                    {/if}
                                 </td>
                                 <td class="border border-black px-1 h-[29px]">
+                                    <!-- 할인적용 여부 관계없이 item.qty * item.price로 계산하면 됨 -->
                                     <input
                                         type="number"
-                                        bind:value={item.amount}
+                                            bind:value={item.amount}
                                         disabled={isLocked}
                                         placeholder={item.qty && item.price
                                             ? String(
-                                                  Number(item.qty) *
-                                                      Number(item.price),
-                                              )
+                                                Number(item.qty) *
+                                                Number(item.price),
+                                            )
                                             : ""}
                                         class="w-full h-full outline-none bg-transparent text-right font-medium disabled:bg-transparent"
-                                    />
+                                        />
                                 </td>
                                 <td class="border border-black px-1 h-[29px]">
                                     <input
@@ -492,11 +504,14 @@
                                 <td
                                     class="border border-black px-1 h-[29px] text-center print:hidden"
                                 >
-                                    <button
-                                        on:click={() => clearItem(i)}
-                                        class="text-slate-300 hover:text-red-500 font-bold text-xs"
-                                        >✕</button
-                                    >
+                                    <!-- 폼이 잠기지 않았을 때(!isLocked)만 삭제 버튼('x') 나타나게 -->
+                                    {#if !isLocked}
+                                        <button
+                                            on:click={() => clearItem(i)}
+                                            class="text-slate-300 hover:text-red-500 font-bold text-xs"
+                                            >✕</button
+                                        >
+                                    {/if}
                                 </td>
                             </tr>
                         {/each}
