@@ -3,8 +3,10 @@
   import DocumentForm from "./components/DocumentForm.svelte";  // 만든 공통 컴포넌트 불러오기
   import DiscountModal from "./components/DiscountModal.svelte"; // 할인 공통 컴포넌트 불러오기
   import { discountPolicies } from "./lib/discountConfig.js"; // 할인 정책 JSON 불러오기
-    import { Disc } from "lucide-svelte";
-
+  import { Disc } from "lucide-svelte";
+  import { db } from "./lib/firebase.js";
+  import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+  
   // 1. 데이터(상태) 선언부
   const now = new Date();
   let year = String(now.getFullYear());
@@ -135,17 +137,55 @@
   function toggleType() {
     currentType = currentType === "invoice" ? "quote" : "invoice";
   }
+
+
+  // 명세서 DB 저장 함수
+  async function saveInvoice() {
+    // 1. 15칸 중 이름이 비어있는 빈 칸은 제외하고 존재하는 데이터만 추려냄
+    const validItems = items.filter(item => item.name.trim() !== "");
+
+    // 2. 최소한의 유효성 검사 (아무것도 안 적고 저장하는 것 방지)
+    if (validItems.length === 0 && !customer.name) {
+      return alert("저장할 내용이 없습니다. 거래처나 품목을 먼저 입력해주세요.");
+    }
+
+    // 3. DB에 쏠 예쁜 꾸러미(객체) 만들기
+    const invoiceData = {
+      docType: currentType,                 // 견적서(quote)인지 명세서(invoice)인지
+      date: `${year}-${month}-${day}`,      // 예: 2026-09-18
+      customerName: customer.name,          // 거래처(공급받는 자) 이름
+      supplier: supplier,                   // 우리 가게 정보
+      items: validItems,                    // 입력한 품목 배열
+      bottomRemark: bottomRemark,           // 하단 비고란
+      createdAt: serverTimestamp(),         // 구글 서버 기준 시간
+    };
+
+    try {
+      // 4. 'invoices' 라는 컬렉션(폴더)에 데이터 밀어넣기
+      const docRef = await addDoc(collection(db, "invoices"), invoiceData);
+      alert(`✅ 성공적으로 저장되었습니다!\n나중에 목록에서 불러올 수 있습니다.`);
+    } catch (e) {
+      console.error("저장 에러:", e);
+      alert("데이터 저장에 실패했습니다. 관리자에게 문의하세요.");
+    }
+  }
 </script>
 
 <!-- 화면 최상단에 문서 타입 전환 버튼 추가 -->
-<div class="text-center pt-4 bg-slate-50 print:hidden">
+<!-- 클라우드에 저장 버튼 추가 -->
+<div class="flex justify-center gap-3 pt-6 bg-slate-50 print:hidden">
   <button
     on:click={toggleType}
-    class="px-4 py-2 bg-slate-800 text-white rounded-lg"
+    class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg shadow-sm transition-colors"
   >
-    {currentType === "invoice"
-      ? "견적서 모드로 전환"
-      : "거래명세서 모드로 전환"}
+    {currentType === "invoice" ? "🔄 견적서 모드로 전환" : "🔄 거래명세서 모드로 전환"}
+  </button>
+
+  <button
+    on:click={saveInvoice}
+    class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center gap-2"
+  >
+    💾 클라우드에 저장하기
   </button>
 </div>
 
