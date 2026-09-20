@@ -8,6 +8,7 @@
   import { collection, addDoc, serverTimestamp } from "firebase/firestore";
   import HistoryModal from "./components/HistoryModal.svelte";
   import Toast from "./components/Toast.svelte";
+  import ConfirmModal from "./components/ConfirmModal.svelte";
   
   // 1. 데이터(상태) 선언부
   const now = new Date();
@@ -243,14 +244,16 @@
   /*
     문서 전체 초기화 버튼
   */
-  function clearForm() {
-    if (!confirm("작성 중인 모든 내용을 지우고 초기화하시겠습니까?")) return;
+  // 새 양식 모달 상태 관리
+  let showClearConfirm = false;
 
+  // 실제 폼을 비우는 실행 함수
+  function executeClearForm() {
     customer.name = "";
     documentNo = "";
     bottomRemark = "";
     
-    // 15칸 빈칸으로 완전 초기화
+    // 15칸 빈칸 초기화
     items = Array(15).fill().map(() => ({
       name: "", spec: "", qty: "", price: "", amount: "", note: "", isDiscountable: true
     }));
@@ -258,7 +261,8 @@
     discountRowIndex = -1;
     roundingRowIndex = -1;
     
-    showToast("새로운 양식으로 초기화되었습니다.", "info");
+    showClearConfirm = false; // 모달 닫기
+    showToast("문서를 정상적으로 초기화하였습니다.", "info");
   }
 
 </script>
@@ -267,10 +271,10 @@
 <!-- 클라우드에 저장 버튼 추가 -->
 <div class="flex justify-center gap-3 pt-6 bg-slate-50 print:hidden">
   <button
-    on:click={clearForm}
+    on:click={() => showClearConfirm = true} 
     class="px-5 py-2.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 font-bold rounded-lg shadow-sm transition-colors flex items-center gap-2"
   >
-    문서 초기화
+    🗑️ 문서 초기화
   </button>
 
   <button
@@ -376,4 +380,17 @@
 <!-- 토스트 알림 -->
 {#if toastMessage}
   <Toast message={toastMessage} type={toastType} />
+{/if}
+
+<!-- 폼 초기화 확인 모달 -->
+{#if showClearConfirm}
+  <ConfirmModal 
+    title="문서 초기화"
+    message="작성 중인 모든 내용을 지우고 초기화하시겠습니까?<br/><span class='text-red-500 font-bold'>지워진 내용은 복구할 수 없습니다.</span>"
+    icon="🗑️"
+    confirmText="초기화하기"
+    confirmColor="bg-indigo-600 hover:bg-indigo-700" 
+    onConfirm={executeClearForm}
+    onCancel={() => showClearConfirm = false}
+  />
 {/if}
