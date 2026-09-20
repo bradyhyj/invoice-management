@@ -2,7 +2,7 @@
   // @ts-nocheck <- 타입 검사 중지
   import { onMount } from "svelte";
   import { db } from "../lib/firebase.js";
-  import { collection, query, orderBy, getDocs } from "firebase/firestore";
+  import { collection, query, orderBy, getDocs, deleteDoc, doc } from "firebase/firestore";
 
   export let onClose;
   export let onLoad;
@@ -10,13 +10,11 @@
   let historyList = [];
   let isLoading = true;
 
-  // 화면 모드 관리 ('calendar' | 'list')
   let displayMode = 'calendar'; 
 
-  // 달력 상태 및 뷰(View) 관리
   let today = new Date();
   let currentYear = today.getFullYear();
-  let currentMonth = today.getMonth(); // 0 ~ 11
+  let currentMonth = today.getMonth(); 
   
   let calendarView = 'day'; 
   let yearPageStart = currentYear - (currentYear % 12); 
@@ -25,7 +23,6 @@
 
   onMount(async () => {
     try {
-      // 💡 1. 명세서(invoices)와 견적서(quotes) 동시에 불러오기 완벽 적용
       const invoicesQuery = query(collection(db, "invoices"), orderBy("createdAt", "desc"));
       const quotesQuery = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
 
@@ -52,6 +49,29 @@
       isLoading = false;
     }
   });
+
+  // 💡 문서 삭제 함수 추가
+  async function handleDelete(docData) {
+    const typeName = docData.docType === 'invoice' ? '명세서' : '견적서';
+    const docNo = docData.documentNo || '미상';
+    
+    // 실수로 지우지 않도록 확인 창 띄우기
+    if (!confirm(`[${typeName} No. ${docNo}]\n이 문서를 정말 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      // 1. 견적서인지 명세서인지 파악해서 DB에서 삭제
+      const collectionName = docData.docType === "quote" ? "quotes" : "invoices";
+      await deleteDoc(doc(db, collectionName, docData.id));
+      
+      // 2. 화면 목록(historyList)에서도 해당 문서 즉시 제거 (반응형 갱신)
+      historyList = historyList.filter(item => item.id !== docData.id);
+    } catch (e) {
+      console.error("문서 삭제 실패:", e);
+      alert("문서 삭제 중 오류가 발생했습니다.");
+    }
+  }
 
   $: docsByDate = historyList.reduce((acc, doc) => {
     const d = doc.date;
@@ -112,12 +132,10 @@
 <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col h-[650px]">
     
-    <!-- 모달 헤더 -->
     <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white z-10">
       <h3 class="font-bold text-lg text-slate-800">📂 저장된 문서 불러오기</h3>
       
       <div class="flex items-center gap-4">
-        <!-- 모드 전환 버튼 -->
         <button 
           on:click={() => displayMode = displayMode === 'calendar' ? 'list' : 'calendar'}
           class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg font-bold text-sm transition-colors border
@@ -133,11 +151,8 @@
       </div>
     </div>
 
-    <!-- 본문 영역 -->
     {#if displayMode === 'calendar'}
-      <!-- 모드 1: 달력 뷰 (좌우 분할) -->
       <div class="flex-1 flex overflow-hidden">
-        <!-- 왼쪽: 달력 영역 -->
         <div class="w-1/2 border-r border-slate-200 p-6 flex flex-col bg-white select-none">
           <div class="flex justify-between items-center mb-6">
             <button on:click={handlePrev} class="p-2 hover:bg-slate-100 rounded-full text-slate-600 font-bold w-10 h-10 flex items-center justify-center transition-colors">&lt;</button>
@@ -193,7 +208,6 @@
           </div>
         </div>
 
-        <!-- 오른쪽: 선택된 날짜의 목록 -->
         <div class="w-1/2 bg-slate-50 p-6 overflow-y-auto">
           <div class="mb-4 flex items-center justify-between">
             <h4 class="font-bold text-slate-800 text-base border-b-2 border-slate-800 pb-1 inline-block">{selectedDateStr} 내역</h4>
@@ -214,8 +228,7 @@
                   <div class="flex justify-between items-start mb-2">
                     <div class="flex items-center gap-2">
                       <span class="text-[11px] font-bold px-2 py-0.5 rounded {doc.docType === 'invoice' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}">{doc.docType === 'invoice' ? '명세서' : '견적서'}</span>
-                      <!-- 💡 달력 뷰 문서번호 정상 출력 -->
-                      <span class="text-xs text-slate-400 font-mono">No. {doc.documentNo || '미상'}</span>
+                      <span class="text-xs text-slate-400">No. {doc.documentNo || '미상'}</span>
                     </div>
                   </div>
                   <div class="mb-3">
@@ -224,7 +237,12 @@
                   </div>
                   <div class="flex justify-between items-end border-t border-slate-100 pt-3 mt-1">
                     <div class="font-bold text-slate-900">₩{calculateTotal(doc.items).toLocaleString()}</div>
-                    <button on:click={() => onLoad(doc)} class="px-4 py-1.5 bg-slate-100 text-slate-600 text-sm font-bold rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors">불러오기</button>
+                    
+                    <!-- 삭제 및 불러오기 버튼 추가 -->
+                    <div class="flex gap-2">
+                      <button on:click={() => handleDelete(doc)} class="px-3 py-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 text-sm font-bold rounded-lg transition-colors">삭제</button>
+                      <button on:click={() => onLoad(doc)} class="px-4 py-1.5 bg-slate-100 text-slate-600 text-sm font-bold rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors">불러오기</button>
+                    </div>
                   </div>
                 </div>
               {/each}
@@ -234,7 +252,6 @@
       </div>
 
     {:else}
-      <!-- 모드 2: 전체 리스트 뷰 -->
       <div class="flex-1 overflow-y-auto bg-slate-50 p-6">
         {#if isLoading}
           <div class="mt-20 text-center text-sm text-slate-400 font-medium animate-pulse">데이터를 불러오는 중입니다...</div>
@@ -258,8 +275,7 @@
                   <div class="flex-1 truncate">
                     <div class="flex items-center gap-2 mb-1">
                       <div class="font-bold text-slate-800 text-lg truncate">{doc.customerName || '거래처 미상'}</div>
-                      <!-- 💡 2. 리스트 뷰 문서번호 정상 출력 적용 완료 -->
-                      <span class="text-xs text-slate-400 font-mono hidden sm:inline-block">No. {doc.documentNo || '미상'}</span>
+                      <span class="text-xs text-slate-400 hidden sm:inline-block">No. {doc.documentNo || '미상'}</span>
                     </div>
                     <div class="text-sm text-slate-500 truncate">
                       {doc.items[0]?.name || '품목 없음'} 
@@ -268,13 +284,20 @@
                   </div>
                 </div>
 
-                <div class="flex items-center gap-6 pl-4">
-                  <div class="font-bold text-slate-900 text-lg text-right w-28 shrink-0">
+                <!-- 삭제 및 불러오기 버튼 추가 -->
+                <div class="flex items-center gap-2 pl-2">
+                  <div class="font-bold text-slate-900 text-lg text-right w-24 shrink-0 mr-2">
                     ₩{calculateTotal(doc.items).toLocaleString()}
                   </div>
                   <button 
+                    on:click={() => handleDelete(doc)} 
+                    class="px-3 py-2 text-slate-400 hover:text-red-500 hover:bg-red-50 text-sm font-bold rounded-lg transition-colors shrink-0"
+                  >
+                    삭제
+                  </button>
+                  <button 
                     on:click={() => onLoad(doc)} 
-                    class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-bold rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0"
+                    class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-bold rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0"
                   >
                     불러오기
                   </button>
