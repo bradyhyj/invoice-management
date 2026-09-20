@@ -50,26 +50,43 @@
     }
   });
 
-  // 💡 문서 삭제 함수 추가
-  async function handleDelete(docData) {
-    const typeName = docData.docType === 'invoice' ? '명세서' : '견적서';
-    const docNo = docData.documentNo || '미상';
-    
-    // 실수로 지우지 않도록 확인 창 띄우기
-    if (!confirm(`[${typeName} No. ${docNo}]\n이 문서를 정말 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.`)) {
-      return;
-    }
+  // 커스텀 삭제 모달을 위한 상태 변수들
+  let showDeleteConfirm = false;
+  let docToDelete = null;
+  let isDeleting = false;
 
+  // 1. 삭제 버튼 클릭 시 (모달 열기)
+  function requestDelete(docData) {
+    docToDelete = docData;
+    showDeleteConfirm = true;
+  }
+
+  // 2. 모달에서 '취소' 클릭 시
+  function cancelDelete() {
+    showDeleteConfirm = false;
+    docToDelete = null;
+  }
+
+  // 3. 모달에서 '삭제하기' 클릭 시 (실제 삭제 로직)
+  async function executeDelete() {
+    if (!docToDelete) return;
+    
+    isDeleting = true; // 삭제 중 로딩 상태 켜기
+    
     try {
-      // 1. 견적서인지 명세서인지 파악해서 DB에서 삭제
-      const collectionName = docData.docType === "quote" ? "quotes" : "invoices";
-      await deleteDoc(doc(db, collectionName, docData.id));
+      const collectionName = docToDelete.docType === "quote" ? "quotes" : "invoices";
+      await deleteDoc(doc(db, collectionName, docToDelete.id));
       
-      // 2. 화면 목록(historyList)에서도 해당 문서 즉시 제거 (반응형 갱신)
-      historyList = historyList.filter(item => item.id !== docData.id);
+      historyList = historyList.filter(item => item.id !== docToDelete.id);
+      
+      // 삭제 성공 후 모달 닫기
+      showDeleteConfirm = false;
+      docToDelete = null;
     } catch (e) {
       console.error("문서 삭제 실패:", e);
       alert("문서 삭제 중 오류가 발생했습니다.");
+    } finally {
+      isDeleting = false; // 로딩 상태 끄기
     }
   }
 
@@ -129,7 +146,7 @@
   }
 </script>
 
-<div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+<div class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col h-[650px]">
     
     <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white z-10">
@@ -219,7 +236,7 @@
           {:else if !docsByDate[selectedDateStr] || docsByDate[selectedDateStr].length === 0}
             <div class="mt-20 text-center flex flex-col items-center">
               <div class="text-4xl mb-3 opacity-20">📭</div>
-              <p class="text-sm text-slate-500 font-medium">해당 날짜에 작성된 명세서가 없습니다.</p>
+              <p class="text-sm text-slate-500 font-medium">해당 날짜에 작성된 문서가 없습니다.</p>
             </div>
           {:else}
             <div class="space-y-3">
@@ -228,7 +245,7 @@
                   <div class="flex justify-between items-start mb-2">
                     <div class="flex items-center gap-2">
                       <span class="text-[11px] font-bold px-2 py-0.5 rounded {doc.docType === 'invoice' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}">{doc.docType === 'invoice' ? '명세서' : '견적서'}</span>
-                      <span class="text-xs text-slate-400">No. {doc.documentNo || '미상'}</span>
+                      <span class="text-xs text-slate-400 font-mono">No. {doc.documentNo || '미상'}</span>
                     </div>
                   </div>
                   <div class="mb-3">
@@ -238,9 +255,9 @@
                   <div class="flex justify-between items-end border-t border-slate-100 pt-3 mt-1">
                     <div class="font-bold text-slate-900">₩{calculateTotal(doc.items).toLocaleString()}</div>
                     
-                    <!-- 삭제 및 불러오기 버튼 추가 -->
                     <div class="flex gap-2">
-                      <button on:click={() => handleDelete(doc)} class="px-3 py-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 text-sm font-bold rounded-lg transition-colors">삭제</button>
+                      <!-- 삭제 버튼 클릭 시 커스텀 모달 띄우기 -->
+                      <button on:click={() => requestDelete(doc)} class="px-3 py-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 text-sm font-bold rounded-lg transition-colors">삭제</button>
                       <button on:click={() => onLoad(doc)} class="px-4 py-1.5 bg-slate-100 text-slate-600 text-sm font-bold rounded-lg group-hover:bg-indigo-600 group-hover:text-white transition-colors">불러오기</button>
                     </div>
                   </div>
@@ -258,7 +275,7 @@
         {:else if historyList.length === 0}
           <div class="mt-20 text-center flex flex-col items-center">
             <div class="text-4xl mb-3 opacity-20">📭</div>
-            <p class="text-sm text-slate-500 font-medium">저장된 명세서가 없습니다.</p>
+            <p class="text-sm text-slate-500 font-medium">저장된 문서가 없습니다.</p>
           </div>
         {:else}
           <div class="space-y-3 max-w-3xl mx-auto">
@@ -275,7 +292,7 @@
                   <div class="flex-1 truncate">
                     <div class="flex items-center gap-2 mb-1">
                       <div class="font-bold text-slate-800 text-lg truncate">{doc.customerName || '거래처 미상'}</div>
-                      <span class="text-xs text-slate-400 hidden sm:inline-block">No. {doc.documentNo || '미상'}</span>
+                      <span class="text-xs text-slate-400 font-mono hidden sm:inline-block">No. {doc.documentNo || '미상'}</span>
                     </div>
                     <div class="text-sm text-slate-500 truncate">
                       {doc.items[0]?.name || '품목 없음'} 
@@ -284,13 +301,13 @@
                   </div>
                 </div>
 
-                <!-- 삭제 및 불러오기 버튼 추가 -->
                 <div class="flex items-center gap-2 pl-2">
                   <div class="font-bold text-slate-900 text-lg text-right w-24 shrink-0 mr-2">
                     ₩{calculateTotal(doc.items).toLocaleString()}
                   </div>
+                  <!-- 삭제 버튼 클릭 시 커스텀 모달 띄우기 -->
                   <button 
-                    on:click={() => handleDelete(doc)} 
+                    on:click={() => requestDelete(doc)} 
                     class="px-3 py-2 text-slate-400 hover:text-red-500 hover:bg-red-50 text-sm font-bold rounded-lg transition-colors shrink-0"
                   >
                     삭제
@@ -310,3 +327,46 @@
     {/if}
   </div>
 </div>
+
+<!-- 커스텀 삭제 확인 모달 -->
+{#if showDeleteConfirm && docToDelete}
+  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col">
+      <div class="p-6 text-center">
+        <!-- 휴지통 아이콘 배경 -->
+        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+          🗑️
+        </div>
+        
+        <h3 class="text-lg font-bold text-slate-800 mb-2">정말 삭제하시겠습니까?</h3>
+        <p class="text-sm text-slate-500 mb-6 leading-relaxed">
+          <span class="font-bold text-slate-700">
+            [{docToDelete.docType === 'invoice' ? '명세서' : '견적서'} No. {docToDelete.documentNo || '미상'}]
+          </span><br/>
+          삭제 후에는 데이터를 복구할 수 없습니다.
+        </p>
+        
+        <div class="flex gap-3">
+          <button 
+            on:click={cancelDelete} 
+            disabled={isDeleting}
+            class="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50"
+          >
+            취소
+          </button>
+          <button 
+            on:click={executeDelete} 
+            disabled={isDeleting}
+            class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors flex justify-center items-center disabled:opacity-50"
+          >
+            {#if isDeleting}
+              <span class="animate-pulse">삭제 중...</span>
+            {:else}
+              삭제하기
+            {/if}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}
