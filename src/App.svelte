@@ -14,6 +14,7 @@
   let year = String(now.getFullYear());
   let month = String(now.getMonth() + 1).padStart(2, "0");
   let day = String(now.getDate()).padStart(2, "0");
+  let documentNo = ""; // 문서 번호
 
   let stampImg = "";
 
@@ -151,9 +152,10 @@
       return showToast("저장할 내용이 없습니다. 거래처나 품목을 먼저 입력해주세요.","error");
     }
 
-    // 3. DB에 쏠 예쁜 꾸러미(객체) 만들기
-    const invoiceData = {
+    // 3. DB에 쏠 객체 만들기
+    const docData = {
       docType: currentType,                 // 견적서(quote)인지 명세서(invoice)인지
+      documentNo: documentNo,               // 문서 번호
       date: `${year}-${month}-${day}`,      // 예: 2026-09-18
       customerName: customer.name,          // 거래처(공급받는 자) 이름
       supplier: supplier,                   // 우리 가게 정보
@@ -163,9 +165,11 @@
     };
 
     try {
-      // 4. 'invoices' 라는 컬렉션(폴더)에 데이터 밀어넣기
-      const docRef = await addDoc(collection(db, "invoices"), invoiceData);
-      alert(`✅ 성공적으로 저장되었습니다!\n나중에 목록에서 불러올 수 있습니다.`);
+      // 4. 거래명세서이면 invoices 컬렉션에 저장
+      //        견적서이면 quotes 컬렉션에 저장
+      const collectionName = currentType === "quote" ? "quotes" : "invoices"
+      await addDoc(collection(db, collectionName), docData);
+      showToast(`${currentType === 'quote' ? '견적서' : '거래명세서'}가 성공적으로 저장되었습니다!`);
     } catch (e) {
       console.error("저장 에러:", e);
       showToast("데이터 저장에 실패했습니다. 관리자에게 문의하세요.","error");
@@ -180,9 +184,10 @@
   let showHistoryModal = false;
 
   // 모달에서 문서를 선택했을 때 실행될 함수
-  function loadInvoiceFromHistory(docData) {
+  function loadDocFromHistory(docData) {
     // 1. 기본 정보 덮어쓰기
     currentType = docData.docType || "invoice";
+    documentNo = docData.documentNo || "";
     customer.name = docData.customerName || "";
     bottomRemark = docData.bottomRemark || "";
     
@@ -316,6 +321,7 @@
   bind:year
   bind:month
   bind:day
+  bind:documentNo
   bind:supplier
   bind:customer
   bind:items
@@ -334,7 +340,7 @@
  {#if showHistoryModal}
   <HistoryModal 
     onClose={() => showHistoryModal = false} 
-    onLoad={loadInvoiceFromHistory} 
+    onLoad={loadDocFromHistory} 
   />
 {/if}
 

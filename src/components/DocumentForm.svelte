@@ -5,6 +5,7 @@
     export let year;
     export let month;
     export let day;
+    export let documentNo;
     export let supplier;
     export let customer;
     export let items;
@@ -154,6 +155,7 @@
                     <input
                         type="text"
                         placeholder="2026-001"
+                        bind:value={documentNo}
                         class="w-20 outline-none text-right bg-transparent border-b border-dashed border-slate-400 print:placeholder-transparent"
                     />
                 </div>

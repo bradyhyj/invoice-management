@@ -25,12 +25,26 @@
 
   onMount(async () => {
     try {
-      const q = query(collection(db, "invoices"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
-      historyList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      // 💡 1. 명세서(invoices)와 견적서(quotes) 동시에 불러오기 완벽 적용
+      const invoicesQuery = query(collection(db, "invoices"), orderBy("createdAt", "desc"));
+      const quotesQuery = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
+
+      const [invoicesSnap, quotesSnap] = await Promise.all([
+        getDocs(invoicesQuery),
+        getDocs(quotesQuery)
+      ]);
+
+      const rawList = [
+        ...invoicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        ...quotesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      ];
+
+      historyList = rawList.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis() || 0;
+        const timeB = b.createdAt?.toMillis() || 0;
+        return timeB - timeA;
+      });
+
     } catch (e) {
       console.error("내역 불러오기 실패:", e);
       alert("데이터를 불러오는데 실패했습니다.");
@@ -103,7 +117,7 @@
       <h3 class="font-bold text-lg text-slate-800">📂 저장된 문서 불러오기</h3>
       
       <div class="flex items-center gap-4">
-        <!-- 💡 모드 전환 버튼 -->
+        <!-- 모드 전환 버튼 -->
         <button 
           on:click={() => displayMode = displayMode === 'calendar' ? 'list' : 'calendar'}
           class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg font-bold text-sm transition-colors border
@@ -200,7 +214,8 @@
                   <div class="flex justify-between items-start mb-2">
                     <div class="flex items-center gap-2">
                       <span class="text-[11px] font-bold px-2 py-0.5 rounded {doc.docType === 'invoice' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}">{doc.docType === 'invoice' ? '명세서' : '견적서'}</span>
-                      <span class="text-xs text-slate-400 font-mono">No. {doc.id.slice(0, 5).toUpperCase()}</span>
+                      <!-- 💡 달력 뷰 문서번호 정상 출력 -->
+                      <span class="text-xs text-slate-400 font-mono">No. {doc.documentNo || '미상'}</span>
                     </div>
                   </div>
                   <div class="mb-3">
@@ -231,10 +246,8 @@
         {:else}
           <div class="space-y-3 max-w-3xl mx-auto">
             {#each historyList as doc}
-              <!-- 가로로 넓게 펼쳐진 리스트 카드 -->
               <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all flex items-center justify-between group">
                 <div class="flex items-center gap-6 w-2/3">
-                  <!-- 날짜 및 뱃지 -->
                   <div class="flex flex-col items-center gap-1.5 w-24 shrink-0 border-r border-slate-100 pr-4">
                     <span class="text-[11px] font-bold px-2 py-0.5 rounded w-full text-center {doc.docType === 'invoice' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}">
                       {doc.docType === 'invoice' ? '명세서' : '견적서'}
@@ -242,11 +255,11 @@
                     <span class="text-xs text-slate-500 font-bold whitespace-nowrap">{doc.date}</span>
                   </div>
                   
-                  <!-- 거래처 및 품목 정보 -->
                   <div class="flex-1 truncate">
                     <div class="flex items-center gap-2 mb-1">
                       <div class="font-bold text-slate-800 text-lg truncate">{doc.customerName || '거래처 미상'}</div>
-                      <span class="text-xs text-slate-400 font-mono hidden sm:inline-block">No. {doc.id.slice(0, 5).toUpperCase()}</span>
+                      <!-- 💡 2. 리스트 뷰 문서번호 정상 출력 적용 완료 -->
+                      <span class="text-xs text-slate-400 font-mono hidden sm:inline-block">No. {doc.documentNo || '미상'}</span>
                     </div>
                     <div class="text-sm text-slate-500 truncate">
                       {doc.items[0]?.name || '품목 없음'} 
@@ -255,7 +268,6 @@
                   </div>
                 </div>
 
-                <!-- 금액 및 불러오기 버튼 -->
                 <div class="flex items-center gap-6 pl-4">
                   <div class="font-bold text-slate-900 text-lg text-right w-28 shrink-0">
                     ₩{calculateTotal(doc.items).toLocaleString()}
