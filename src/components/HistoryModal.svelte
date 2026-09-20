@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   import { db } from "../lib/firebase.js";
   import { collection, query, orderBy, getDocs, deleteDoc, doc } from "firebase/firestore";
+  import ConfirmModal from "./ConfirmModal.svelte";
 
   export let onClose;
   export let onLoad;
@@ -98,7 +99,8 @@
   }, {});
 
   $: firstDay = new Date(currentYear, currentMonth, 1).getDay();
-  $: daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();$: calendarGrid = Array(firstDay).fill(null).concat(Array.from({ length: daysInMonth }, (_, i) => i + 1));
+  $: daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  $: calendarGrid = Array(firstDay).fill(null).concat(Array.from({ length: daysInMonth }, (_, i) => i + 1));
 
   function handleHeaderClick() {
     if (calendarView === 'day') calendarView = 'month';
@@ -328,45 +330,17 @@
   </div>
 </div>
 
-<!-- 커스텀 삭제 확인 모달 -->
+
+<!-- 공통 컴포넌트를 활용한 삭제 확인 모달로 refactor함 -->
 {#if showDeleteConfirm && docToDelete}
-  <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col">
-      <div class="p-6 text-center">
-        <!-- 휴지통 아이콘 배경 -->
-        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-          🗑️
-        </div>
-        
-        <h3 class="text-lg font-bold text-slate-800 mb-2">정말 삭제하시겠습니까?</h3>
-        <p class="text-sm text-slate-500 mb-6 leading-relaxed">
-          <span class="font-bold text-slate-700">
-            [{docToDelete.docType === 'invoice' ? '명세서' : '견적서'} No. {docToDelete.documentNo || '미상'}]
-          </span><br/>
-          삭제 후에는 데이터를 복구할 수 없습니다.
-        </p>
-        
-        <div class="flex gap-3">
-          <button 
-            on:click={cancelDelete} 
-            disabled={isDeleting}
-            class="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors disabled:opacity-50"
-          >
-            취소
-          </button>
-          <button 
-            on:click={executeDelete} 
-            disabled={isDeleting}
-            class="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors flex justify-center items-center disabled:opacity-50"
-          >
-            {#if isDeleting}
-              <span class="animate-pulse">삭제 중...</span>
-            {:else}
-              삭제하기
-            {/if}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <ConfirmModal
+    title="정말 삭제하시겠습니까?"
+    message="<span class='font-bold text-slate-700'>[{docToDelete.docType === 'invoice' ? '명세서' : '견적서'} No. {docToDelete.documentNo || '미상'}]</span><br/>삭제 후에는 데이터를 복구할 수 없습니다."
+    icon="🗑️"
+    confirmText="삭제하기"
+    confirmColor="bg-red-500 hover:bg-red-600"
+    isProcessing={isDeleting}
+    onConfirm={executeDelete}
+    onCancel={cancelDelete}
+  />
 {/if}
