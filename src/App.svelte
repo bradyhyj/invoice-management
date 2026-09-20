@@ -7,6 +7,7 @@
   import { db } from "./lib/firebase.js";
   import { collection, addDoc, serverTimestamp } from "firebase/firestore";
   import HistoryModal from "./components/HistoryModal.svelte";
+  import Toast from "./components/Toast.svelte";
   
   // 1. 데이터(상태) 선언부
   const now = new Date();
@@ -69,10 +70,10 @@
   ];
 
   function addQuickItem(qItem) {
-    if (isLocked) return alert("할인이 적용된 상태에서는 품목을 추가할 수 없습니다. 할인을 먼저 취소해주세요.");
+    if (isLocked) return showToast("할인이 적용된 상태에서는 품목을 추가할 수 없습니다. 할인을 먼저 취소해주세요.","error");
     
     const idx = getEmptyRowIndex();
-    if (idx === -1) return alert("명세서에 빈 칸이 없습니다.");
+    if (idx === -1) return showToast("명세서에 빈 칸이 없습니다.","error");
 
     items[idx] = {
       name: qItem.name,
@@ -91,7 +92,7 @@
   let selectedPolicy = null;
 
   function handleDiscountClick(policy) {
-    if (isLocked) return alert("이미 다른 할인이 적용되어 있습니다. 먼저 취소해주세요.");
+    if (isLocked) return showToast("이미 다른 할인이 적용되어 있습니다. 먼저 취소해주세요.","error");
   
     // 모달에 정책 데이터 넣고 창 띄우기
     selectedPolicy = policy;
@@ -102,7 +103,7 @@
   function applyDiscountToForm(discountData) {
     const idx = getEmptyRowIndex();
     if(idx === -1) {
-      alert("명세서에 빈 칸이 없어 할인을 추가할 수 없습니다.");
+      showToast("명세서에 빈 칸이 없어 할인을 추가할 수 없습니다.","error");
       return;
     }
     
@@ -147,7 +148,7 @@
 
     // 2. 최소한의 유효성 검사 (아무것도 안 적고 저장하는 것 방지)
     if (validItems.length === 0 && !customer.name) {
-      return alert("저장할 내용이 없습니다. 거래처나 품목을 먼저 입력해주세요.");
+      return showToast("저장할 내용이 없습니다. 거래처나 품목을 먼저 입력해주세요.","error");
     }
 
     // 3. DB에 쏠 예쁜 꾸러미(객체) 만들기
@@ -167,7 +168,7 @@
       alert(`✅ 성공적으로 저장되었습니다!\n나중에 목록에서 불러올 수 있습니다.`);
     } catch (e) {
       console.error("저장 에러:", e);
-      alert("데이터 저장에 실패했습니다. 관리자에게 문의하세요.");
+      showToast("데이터 저장에 실패했습니다. 관리자에게 문의하세요.","error");
     }
   }
 
@@ -209,9 +210,29 @@
     discountRowIndex = -1;
     roundingRowIndex = -1;
     showHistoryModal = false;
-    alert("문서를 성공적으로 불러왔습니다!");
+    showToast("문서를 성공적으로 불러왔습니다!");
   }
 
+
+  /*
+    토스트 알림창
+  */
+ // 토스트 시스템 상태 관리
+  let toastMessage = "";
+  let toastType = "success";
+  let toastTimeout;
+
+  // 토스트 띄우기 함수
+  function showToast(msg, type = "success") {
+    toastMessage = msg;
+    toastType = type;
+    
+    // 기존 타이머가 있으면 지우고 새로 3초 설정
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      toastMessage = "";
+    }, 3000);
+  }
 
 </script>
 
@@ -315,4 +336,9 @@
     onClose={() => showHistoryModal = false} 
     onLoad={loadInvoiceFromHistory} 
   />
+{/if}
+
+<!-- 토스트 알림 -->
+{#if toastMessage}
+  <Toast message={toastMessage} type={toastType} />
 {/if}
