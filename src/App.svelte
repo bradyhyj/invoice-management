@@ -239,11 +239,40 @@
     }, 3000);
   }
 
+
+  /*
+    문서 전체 초기화 버튼
+  */
+  function clearForm() {
+    if (!confirm("작성 중인 모든 내용을 지우고 초기화하시겠습니까?")) return;
+
+    customer.name = "";
+    documentNo = "";
+    bottomRemark = "";
+    
+    // 15칸 빈칸으로 완전 초기화
+    items = Array(15).fill().map(() => ({
+      name: "", spec: "", qty: "", price: "", amount: "", note: "", isDiscountable: true
+    }));
+    
+    discountRowIndex = -1;
+    roundingRowIndex = -1;
+    
+    showToast("새로운 양식으로 초기화되었습니다.", "info");
+  }
+
 </script>
 
 <!-- 화면 최상단에 문서 타입 전환 버튼 추가 -->
 <!-- 클라우드에 저장 버튼 추가 -->
 <div class="flex justify-center gap-3 pt-6 bg-slate-50 print:hidden">
+  <button
+    on:click={clearForm}
+    class="px-5 py-2.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 font-bold rounded-lg shadow-sm transition-colors flex items-center gap-2"
+  >
+    문서 초기화
+  </button>
+
   <button
     on:click={toggleType}
     class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg shadow-sm transition-colors"
