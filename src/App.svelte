@@ -5,10 +5,11 @@
   import { discountPolicies } from "./lib/discountConfig.js"; // 할인 정책 JSON 불러오기
   import { Disc } from "lucide-svelte";
   import { db } from "./lib/firebase.js";
-  import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+  import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "firebase/firestore";
   import HistoryModal from "./components/HistoryModal.svelte";
   import Toast from "./components/Toast.svelte";
   import ConfirmModal from "./components/ConfirmModal.svelte";
+  import { onMount } from "svelte";
   
   // 1. 데이터(상태) 선언부
   const now = new Date();
@@ -137,9 +138,15 @@
   // 문서 타입 상태 (토글용)
   let currentType = "invoice";
 
+  // 앱이 처음 켜질 때 번호 따오기
+  onMount(() => {
+    fetchNextDocNumber();
+  });
+
   // 견적서 <-> 명세서 전환 함수
   function toggleType() {
     currentType = currentType === "invoice" ? "quote" : "invoice";
+    fetchNextDocNumber(); // 바꿀 때 마다 번호 다시 따오기
   }
 
 
@@ -262,9 +269,46 @@
     roundingRowIndex = -1;
     
     showClearConfirm = false; // 모달 닫기
+
+    fetchNextDocNumber(); // 새 양식이니 새로 번호 따오기
     showToast("문서를 정상적으로 초기화하였습니다.", "info");
   }
 
+
+
+  // 문서 번호 자동 생성 (채번) 함수
+  async function fetchNextDocNumber() {
+    try {
+      const collectionName = currentType === "quote" ? "quotes" : "invoices";
+      
+      // DB에서 가장 최근(createdAt 내림차순) 문서 딱 1개만 가져오기
+      const q = query(collection(db, collectionName), orderBy("createdAt", "desc"), limit(1));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        // 데이터가 아예 없으면 001번으로 시작
+        documentNo = `${year}-001`;
+      } else {
+        const lastDoc = querySnapshot.docs[0].data();
+        const lastDocNo = lastDoc.documentNo; // ex) "2026-001"
+
+        if (lastDocNo && lastDocNo.startsWith(year)) {
+          // 연도가 같으면 뒷자리에 +1
+          const parts = lastDocNo.split("-");
+          const numPart = parseInt(parts[1], 10);
+          const nextNum = numPart + 1;
+          documentNo = `${year}-${String(nextNum).padStart(3, "0")}`;
+        } else {
+          // 연도가 바뀌었거나 번호가 이상하면 해당 연도 001번으로 리셋
+          documentNo = `${year}-001`;
+        }
+      }
+    } catch (e) {
+      console.error("번호 채번 실패:", e);
+      // 에러 나면 수동으로 입력할 수 있게 비워둠
+      documentNo = "";
+    }
+  }
 </script>
 
 <!-- 화면 최상단에 문서 타입 전환 버튼 추가 -->
