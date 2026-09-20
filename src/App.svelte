@@ -6,6 +6,7 @@
   import { Disc } from "lucide-svelte";
   import { db } from "./lib/firebase.js";
   import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+  import HistoryModal from "./components/HistoryModal.svelte";
   
   // 1. 데이터(상태) 선언부
   const now = new Date();
@@ -169,6 +170,49 @@
       alert("데이터 저장에 실패했습니다. 관리자에게 문의하세요.");
     }
   }
+
+
+  /*
+    거래명세서/견적서 불러오기
+  */
+  // 히스토리 모달 상태 관리
+  let showHistoryModal = false;
+
+  // 모달에서 문서를 선택했을 때 실행될 함수
+  function loadInvoiceFromHistory(docData) {
+    // 1. 기본 정보 덮어쓰기
+    currentType = docData.docType || "invoice";
+    customer.name = docData.customerName || "";
+    bottomRemark = docData.bottomRemark || "";
+    
+    // 2. 날짜 쪼개서 넣기 ("2026-09-18" -> year, month, day)
+    if (docData.date) {
+      const [y, m, d] = docData.date.split('-');
+      year = y; month = m; day = d;
+    }
+
+    // 3. 품목 데이터를 15칸 배열에 맞게 채워넣기
+    let newItems = Array(15).fill().map(() => ({
+      name: "", spec: "", qty: "", price: "", amount: "", note: "", isDiscountable: true
+    }));
+    
+    // 저장된 데이터가 있으면 앞에서부터 순서대로 덮어씌움
+    docData.items.forEach((savedItem, index) => {
+      if (index < 15) {
+        newItems[index] = { ...savedItem };
+      }
+    });
+    
+    items = newItems;
+    
+    // 4. 상태 초기화 후 모달 닫기
+    discountRowIndex = -1;
+    roundingRowIndex = -1;
+    showHistoryModal = false;
+    alert("문서를 성공적으로 불러왔습니다!");
+  }
+
+
 </script>
 
 <!-- 화면 최상단에 문서 타입 전환 버튼 추가 -->
@@ -186,6 +230,13 @@
     class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center gap-2"
   >
     💾 클라우드에 저장하기
+  </button>
+
+  <button
+    on:click={() => showHistoryModal = true}
+    class="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold rounded-lg shadow-sm transition-colors flex items-center gap-2"
+  >
+    📂 내역 불러오기
   </button>
 </div>
 
@@ -256,4 +307,12 @@
 <!-- 할인 팝업 -->
  {#if showDiscountModal}
     <DiscountModal policy={selectedPolicy} {items} onClose={() => showDiscountModal = false} onApply={applyDiscountToForm} />
+{/if}
+
+<!-- 거래명세서/견적서 불러오기 -->
+ {#if showHistoryModal}
+  <HistoryModal 
+    onClose={() => showHistoryModal = false} 
+    onLoad={loadInvoiceFromHistory} 
+  />
 {/if}
