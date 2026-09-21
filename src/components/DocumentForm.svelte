@@ -258,9 +258,9 @@
                                     <div
                                         class="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 z-0 flex items-center justify-center pointer-events-none"
                                     >
-                                        {#if stampImg}
+                                        {#if supplier.stampImg}
                                             <img
-                                                src={stampImg}
+                                                src={supplier.stampImg}
                                                 alt="도장"
                                                 class="w-full h-full object-contain opacity-85"
                                             />
@@ -431,8 +431,10 @@
                     <tbody>
                         {#each items as item, i}
                             <tr
-                                class={i === discountRowIndex || i === roundingRowIndex
-                                ? 'text-red-600 bg-red-50/30' : ''}
+                                class={i === discountRowIndex ||
+                                i === roundingRowIndex
+                                    ? "text-red-600 bg-red-50/30"
+                                    : ""}
                             >
                                 <td
                                     class="border border-black px-1 py-1 align-middle"
@@ -455,7 +457,7 @@
                                             type="text"
                                             bind:value={item.spec}
                                             disabled={isLocked}
-                                            class="w-full h-full outline-none bg-transparent text-center disabled:bg-transparent "
+                                            class="w-full h-full outline-none bg-transparent text-center disabled:bg-transparent"
                                         />
                                     {/if}
                                 </td>
@@ -484,16 +486,16 @@
                                     <!-- 할인적용 여부 관계없이 item.qty * item.price로 계산하면 됨 -->
                                     <input
                                         type="number"
-                                            bind:value={item.amount}
+                                        bind:value={item.amount}
                                         disabled={isLocked}
                                         placeholder={item.qty && item.price
                                             ? String(
-                                                Number(item.qty) *
-                                                Number(item.price),
-                                            )
+                                                  Number(item.qty) *
+                                                      Number(item.price),
+                                              )
                                             : ""}
                                         class="w-full h-full outline-none bg-transparent text-right font-medium disabled:bg-transparent"
-                                        />
+                                    />
                                 </td>
                                 <td class="border border-black px-1 h-[29px]">
                                     <input
