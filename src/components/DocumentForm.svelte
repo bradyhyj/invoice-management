@@ -543,13 +543,20 @@
                         <tr class="bg-white">
                             <td
                                 colspan="6"
-                                class="border border-black py-6 px-4"
+                                class="border border-black h-[120px] p-2"
                             >
-                                <textarea
-                                    bind:value={bottomRemark}
-                                    placeholder="카드 승인일자: 2026-02-04&#10;카드 승인번호: 76455339&#10;카드 결제금액: 83,760원"
-                                    class="w-full h-[74px] overflow-hidden outline-none resize-none bg-transparent text-center text-sm leading-relaxed text-slate-500 font-medium print:placeholder-transparent"
-                                ></textarea>
+                                <div
+                                    class="flex items-center justify-center w-full h-full"
+                                >
+                                    <textarea
+                                        bind:value={bottomRemark}
+                                        placeholder="카드 승인일자: 2026-02-04&#10;카드 승인번호: 76455339&#10;카드 결제금액: 83,760원"
+                                        rows={bottomRemark
+                                            ? bottomRemark.split("\n").length
+                                            : 3}
+                                        class="w-full bg-transparent outline-none resize-none text-center text-sm leading-relaxed text-black font-bold placeholder:text-slate-400 placeholder:font-normal print:placeholder-transparent"
+                                    ></textarea>
+                                </div>
                             </td>
                             <td class="border border-black print:hidden"></td>
                         </tr>
