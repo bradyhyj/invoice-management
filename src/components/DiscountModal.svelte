@@ -35,12 +35,20 @@
 
   // 정책 기반 할인 상한값 계산 함수
   function getMaxPointLimit(amount, policyConfig) {
-    // maxUsagePercent가 존재하면 그 비율만큼 한도 설정 (소수점 버림)
+    let limit = amount;
+
+    // 1. maxUsagePercent가 존재하면 그 비율만큼 한도 설정 (소수점 버림)
     if (policyConfig.maxUsagePercent) {
-      return Math.floor(amount * (policyConfig.maxUsagePercent / 100));
+      limit = Math.floor(amount * (policyConfig.maxUsagePercent / 100));
     }
-    // 퍼센트 제한이 없으면 총액이 한도
-    return amount;
+
+    // 2. 포인트 단위(pointUnit)가 설정되어 있다면 단위에 맞게 절사 (예: 50750 -> 50700)
+    if (policyConfig.pointUnit) {
+      limit = Math.floor(limit / policyConfig.pointUnit) * policyConfig.pointUnit;
+    }
+
+    // 최종 계산 리턴
+    return limit;
   }
 
   // 💡 최종 할인 금액 계산 로직
