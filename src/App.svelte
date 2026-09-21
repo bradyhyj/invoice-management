@@ -272,9 +272,11 @@
 
     items = newItems;
 
-    // 4. 상태 초기화 후 모달 닫기
-    discountRowIndex = -1;
-    roundingRowIndex = -1;
+    // 4. 할인 및 끝전 처리 행(Row) 위치 다시 찾아주기
+    // 무조건 -1로 초기화하지 않고, 비고란이나 품명에 '할인/단수' 단어가 있는지 찾아서 인덱스를 복구한다
+    discountRowIndex = items.findIndex(item => item.note === "할인적용" || item.name.includes("할인"));
+    roundingRowIndex = items.findIndex(item => item.note === "자동계산" || item.name.includes("끝전"));
+
     showHistoryModal = false;
     showToast("문서를 성공적으로 불러왔습니다!");
   }
