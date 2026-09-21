@@ -13,6 +13,7 @@
     orderBy,
     limit,
     getDocs,
+    where,
   } from "firebase/firestore";
   import HistoryModal from "./components/HistoryModal.svelte";
   import Toast from "./components/Toast.svelte";
@@ -184,6 +185,26 @@
       );
     }
 
+    // 문서 번호 비어있는지 체크
+    if (!documentNo.trim()) {
+      return showToast("문서 번호를 입력해주세요.", "error");
+    }
+
+    const collectionName = currentType === "quote" ? "quotes" : "invoices";
+
+    try {
+      // 문서 번호 중복 검사(DB에 같은 문서 번호가 있는지 확인)
+      const q = query(collection(db, collectionName), where("documentNo", "==", documentNo.trim()));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // 이미 같은 번호가 존재하면 저장을 막고 에러 메시지 띄움
+        return showToast(
+          `이미 존재하는 문서 번호(${documentNo})입니다. 번호를 변경해주세요.`,
+          "error"
+        );
+      }
+
     // 3. DB에 쏠 객체 만들기
     const docData = {
       docType: currentType, // 견적서(quote)인지 명세서(invoice)인지
@@ -196,14 +217,11 @@
       createdAt: serverTimestamp(), // 구글 서버 기준 시간
     };
 
-    try {
-      // 4. 거래명세서이면 invoices 컬렉션에 저장
-      //        견적서이면 quotes 컬렉션에 저장
-      const collectionName = currentType === "quote" ? "quotes" : "invoices";
       await addDoc(collection(db, collectionName), docData);
       showToast(
-        `${currentType === "quote" ? "견적서" : "거래명세서"}가 성공적으로 저장되었습니다!`,
+        `${currentType === "quote" ? "견적서" : "거래명세서"}가 성공적으로 저장되었습니다!`
       );
+
     } catch (e) {
       console.error("저장 에러:", e);
       showToast("데이터 저장에 실패했습니다. 관리자에게 문의하세요.", "error");
