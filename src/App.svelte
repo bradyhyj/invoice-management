@@ -66,7 +66,8 @@
         !item.name &&
         !item.qty &&
         !item.price &&
-        (!item.amount || item.amount === ""),
+        (!item.amount || item.amount === "") &&
+        !item.note
     );
   }
 
@@ -172,7 +173,8 @@
   // 명세서 DB 저장 함수
   async function saveInvoice() {
     // 1. 15칸 중 이름이 비어있는 빈 칸은 제외하고 존재하는 데이터만 추려냄
-    const validItems = items.filter((item) => item.name.trim() !== "");
+    // 조건 추가) 품명(name)이 없더라도 비고(note)에 내용이 있으면 저장하도록 필터링 조건 변경
+    const validItems = items.filter((item) => item.name.trim() !== "" || item.note.trim() !== "");
 
     // 2. 최소한의 유효성 검사 (아무것도 안 적고 저장하는 것 방지)
     if (validItems.length === 0 && !customer.name) {
