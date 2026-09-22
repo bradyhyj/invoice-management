@@ -442,7 +442,7 @@
                                     <textarea
                                         bind:value={item.name}
                                         disabled={isLocked}
-                                        rows="1"
+                                        rows={item.name ? item.name.split('\n').length : 1}
                                         class="cell-input w-full min-h-[24px] outline-none bg-transparent text-center resize-none disabled:bg-transparent"
                                     ></textarea>
                                 </td>
@@ -498,12 +498,12 @@
                                     />
                                 </td>
                                 <td class="border border-black px-1 h-[29px]">
-                                    <input
-                                        type="text"
+                                    <textarea
                                         bind:value={item.note}
                                         disabled={isLocked}
-                                        class="w-full h-full outline-none bg-transparent text-center text-xs disabled:bg-transparent"
-                                    />
+                                        rows={item.note ? item.note.split('\n').length : 1}
+                                        class="w-full h-full outline-none bg-transparent text-center text-xs disabled:bg-transparent resize-none"
+                                    ></textarea>
                                 </td>
                                 <td
                                     class="border border-black px-1 h-[29px] text-center print:hidden"
