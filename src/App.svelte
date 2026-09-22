@@ -46,15 +46,6 @@
       note: "",
       isDiscountable: true,
     }));
-  items[0] = {
-    name: "버라이어티팩(6개입)",
-    spec: "EA",
-    qty: 8,
-    price: 12200,
-    amount: "",
-    note: "",
-    isDiscountable: true,
-  };
 
   // 잠금 및 상태 제어 로직
   let discountRowIndex = -1; // 할인이 적용된 빈칸의 인덱스
