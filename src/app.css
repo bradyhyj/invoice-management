@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@font-face {
+  font-family: 'CustomFont';
+  src: url('/fonts/HCRBatang.ttf') format('truetype'); 
+  font-weight: normal;
+  font-style: normal;
+}
+
+.invoice-font {
+  font-family: 'CustomFont', sans-serif;
+}
