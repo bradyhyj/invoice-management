@@ -20,6 +20,7 @@
   import ConfirmModal from "./components/ConfirmModal.svelte";
   import { onMount } from "svelte";
   import Login from "./components/Login.svelte";
+  import CustomSetModal from "./components/CustomSetModal.svelte";
 
   // 1. 데이터(상태) 선언부
   const now = new Date();
@@ -394,6 +395,56 @@
     };
     isLoggedIn = true;
   }
+
+
+
+  /*
+    고객 맞춤형 도넛 세트
+  */
+  let showCustomSetModal = false;
+
+  function applyCustomSet({ unitPrice, count, mainAmount, remainder }) {
+    const emptyIdx = items.findIndex(item => !item.name && !item.amount);
+    if (emptyIdx === -1) {
+      return showToast("명세서에 빈칸이 부족합니다.", "error");
+    }
+
+    // 메인 세트 품목 추가
+    items[emptyIdx] = {
+      name: "고객 맞춤형 도넛 세트",
+      spec: "EA",
+      qty: count,
+      price: unitPrice,
+      amount: mainAmount,
+      note: "",
+      isDiscountable: true
+    };
+
+    // 끝수 처리 (오버된 마이너스 금액이 있을 경우에만 추가)
+    if (remainder < 0) {
+      const nextEmptyIdx = items.findIndex((item, idx) => idx > emptyIdx && !item.name && !item.amount);
+      if (nextEmptyIdx !== -1) {
+        items[nextEmptyIdx] = {
+          name: "끝수처리(절사)",
+          spec: "",
+          qty: "",
+          price: "", 
+          amount: remainder,
+          note: "",
+          isDiscountable: false
+        };
+        roundingRowIndex = nextEmptyIdx;
+        showToast("맞춤형 세트 및 끝수처리가 적용되었습니다.");
+      } else {
+        showToast("끝수처리를 추가할 빈칸이 부족합니다.", "error");
+      }
+    } else {
+      showToast("맞춤형 세트가 적용되었습니다.");
+    }
+
+    items = [...items];
+    showCustomSetModal = false;
+  }
 </script>
 
 <!-- 로그인 -->
@@ -452,6 +503,13 @@
               + {qItem.name}
             </button>
           {/each}
+
+          <button
+            on:click={() => showCustomSetModal = true}
+            class="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg transition-colors border border-indigo-200"
+          >
+            + 맞춤형 세트 계산기
+        </button>
         </div>
       </div>
 
@@ -544,4 +602,14 @@
       />
     {/if}
   </div>
+{/if}
+
+
+<!-- 고객 맞춤형 세트 모달 -->
+{#if showCustomSetModal}
+  <CustomSetModal 
+    onClose={() => showCustomSetModal = false} 
+    onApply={applyCustomSet}
+    onError={(msg) => showToast(msg, "error")} 
+  />
 {/if}
