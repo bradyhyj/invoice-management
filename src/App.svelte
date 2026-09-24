@@ -51,7 +51,7 @@
   // 잠금 및 상태 제어 로직
   let discountRowIndex = -1; // 할인이 적용된 빈칸의 인덱스
   let roundingRowIndex = -1; // 끝수 처리가 적용된 인덱스
-  $: isLocked = discountRowIndex !== -1 || roundingRowIndex !== -1;
+  $: isLocked = discountRowIndex !== -1;
 
   function getEmptyRowIndex() {
     return items.findIndex(
