@@ -78,18 +78,29 @@
         "error",
       );
 
-    const idx = getEmptyRowIndex();
-    if (idx === -1) return showToast("명세서에 빈 칸이 없습니다.", "error");
+    // 1. 추가하려는 품목이 이미 목록(items)에 존재하는지 이름으로 찾기
+    const existingItemIndex = items.findIndex(item => item.name === qItem.name);
+    
+    if (existingItemIndex !== -1) {
+      // 2. 이미 존재하는 품목이라면 수량(qty)만 1 증가
+      // (DocumentForm.svelte에 정의된 반응성 로직($:)에 의해 amount는 자동 계산됨)
+      items[existingItemIndex].qty = Number(items[existingItemIndex].qty) + 1;
 
-    items[idx] = {
-      name: qItem.name,
-      spec: "EA",
-      qty: 1,
-      price: qItem.price,
-      amount: qItem.price, // 수량*단가로 자동 계산되지만 명시적으로 넣음
-      note: qItem.note,
-      isDiscountable: qItem.isDiscountable,
-    };
+    } else {
+      // 존재하지 않는 경우라면
+      const idx = getEmptyRowIndex();
+      if (idx === -1) return showToast("명세서에 빈 칸이 없습니다.", "error");
+
+      items[idx] = {
+        name: qItem.name,
+        spec: "EA",
+        qty: 1,
+        price: qItem.price,
+        amount: qItem.price, // 수량*단가로 자동 계산되지만 명시적으로 넣음
+        note: qItem.note,
+        isDiscountable: qItem.isDiscountable,
+      };
+    }
     items = [...items]; // Svelte 화면 갱신
   }
 
