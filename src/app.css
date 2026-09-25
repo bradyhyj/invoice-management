@@ -10,3 +10,15 @@
 .invoice-font {
   font-family: 'CustomFont', sans-serif;
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
