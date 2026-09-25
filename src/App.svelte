@@ -3,6 +3,7 @@
   import DocumentForm from "./components/DocumentForm.svelte"; // 만든 공통 컴포넌트 불러오기
   import DiscountModal from "./components/DiscountModal.svelte"; // 할인 공통 컴포넌트 불러오기
   import { discountPolicies } from "./lib/discountConfig.js"; // 할인 정책 JSON 불러오기
+  import { productCategories } from "./lib/productConfig.js"; // 품목 데이터 JSON 불러오기
   import { Disc } from "lucide-svelte";
   import { db } from "./lib/firebase.js";
   import {
@@ -64,12 +65,8 @@
     );
   }
 
-  // 빠른 품목 추가
-  const quickItems = [
-    { name: "비닐쇼핑백", price: 100, isDiscountable: false, note: "" },
-    { name: "종이쇼핑백", price: 200, isDiscountable: false, note: "" },
-    { name: "아메리카노(HOT)", price: 3900, isDiscountable: true, note: "" },
-  ];
+  // 현재 선택된 품목 카테고리 탭
+  let activeCategory = productCategories.length > 0 ? productCategories[0].categoryName : "";
 
   function addQuickItem(qItem) {
     if (isLocked)
@@ -504,11 +501,34 @@
     <div class="max-w-4xl mx-auto mt-4 print:hidden space-y-3">
       <!-- 🛍️ 섹션 1: 빠른 품목 추가 -->
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-300">
-        <div class="text-sm font-bold text-slate-700 mb-2">
-          🛍️ 빠른 품목 추가
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-sm font-bold text-slate-700">🛍️ 빠른 품목 추가</div>
+          <button
+            on:click={() => (showCustomSetModal = true)}
+            class="px-3 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs font-bold rounded-lg transition-colors border border-indigo-200"
+          >
+            + 맞춤형 세트 계산기
+          </button>
         </div>
+
+        <!-- 카테고리 탭 -->
+        <div class="flex gap-2 border-b border-slate-200 mb-3 overflow-x-auto">
+          {#each productCategories as category}
+            <button
+              on:click={() => (activeCategory = category.categoryName)}
+              class="px-3 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors {activeCategory ===
+              category.categoryName
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}"
+            >
+              {category.categoryName}
+            </button>
+          {/each}
+        </div>
+
+        <!-- 탭에 해당하는 품목 버튼들 -->
         <div class="flex gap-2 flex-wrap">
-          {#each quickItems as qItem}
+          {#each productCategories.find((c) => c.categoryName === activeCategory)?.items || [] as qItem}
             <button
               on:click={() => addQuickItem(qItem)}
               class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-sm font-medium rounded"
@@ -516,13 +536,6 @@
               + {qItem.name}
             </button>
           {/each}
-
-          <button
-            on:click={() => showCustomSetModal = true}
-            class="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg transition-colors border border-indigo-200"
-          >
-            + 맞춤형 세트 계산기
-        </button>
         </div>
       </div>
 
