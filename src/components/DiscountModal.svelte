@@ -287,7 +287,7 @@
               <!-- 사용할 포인트 입력 -->
               <div>
                 <div class="flex justify-between items-end mb-2">
-                  <label class="text-sm font-bold text-slate-700"
+                  <label for="pointInputForm" class="text-sm font-bold text-slate-700"
                     >사용할 포인트 입력</label
                   >
                   <button
@@ -306,6 +306,7 @@
 
                 <div class="relative">
                   <input
+                    id="pointInputForm"
                     type="number"
                     bind:value={customValue}
                     placeholder="0"
