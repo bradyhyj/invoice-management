@@ -25,6 +25,19 @@ export const discountPolicies = {
     },
 
     {
+      id: "happy_point",
+      name: "해피포인트 사용",
+      buttonColor: "bg-blue-50 text-blue-700",
+      type: "POINT_INPUT", // 고객이 직접 포인트를 입력하는 방식
+      minUsage: 100, // 최소 100원 이상부터
+      maxUsagePercent: 100, // 전액 결제 가능 여부
+      pointUnit: 10, // 포인트 사용 단위
+      isPayment: true, // 💡 일반 할인이 아닌 결제 수단으로 취급 (할인 락 안 걸림)
+      requiresItemSelection: false, // 💡 품목 선택 없이 총액에서 바로 깎는가? -> O
+      warningMessage: "고객님께 현재 포인트가 얼마나 있는지를 확인해주세요.",
+    },
+
+    {
       id: "blue_members",
       name: "블루멤버스",
       buttonColor: "bg-blue-50 text-blue-700",

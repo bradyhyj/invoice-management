@@ -109,7 +109,7 @@
   let selectedPolicy = null;
 
   function handleDiscountClick(policy) {
-    if (isLocked)
+    if (isLocked && !policy.isPayment)
       return showToast(
         "이미 다른 할인이 적용되어 있습니다. 먼저 취소해주세요.",
         "error",
@@ -134,12 +134,14 @@
       qty: 1,
       price: discountData.amount,
       amount: discountData.amount,
-      note: "할인적용",
+      note: discountData.isPayment ? "포인트결제" : "할인적용",
       isDiscountable: false,
     };
 
     items = [...items]; // Svelte 갱신
-    discountRowIndex = idx; // 잠금
+    if (!discountData.isPayment) {
+      discountRowIndex = idx; // 일반 할인일 때만 잠금
+    }
     showDiscountModal = false;
   }
 
