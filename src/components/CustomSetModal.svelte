@@ -37,18 +37,18 @@
     <div class="p-6 space-y-4 bg-white">
       <!-- 총 금액 입력 칸 -->
       <div>
-        <label class="block text-sm font-bold text-slate-700 mb-1">고객이 요청한 총 금액</label>
+        <label for="customSetTotalInput" class="block text-sm font-bold text-slate-700 mb-1">고객이 요청한 총 금액</label>
         <div class="flex items-center border border-slate-300 rounded-lg px-4 py-2 bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-colors">
-          <input type="number" bind:value={customSetTotal} placeholder="100000" class="flex-1 w-full outline-none text-right font-bold text-slate-800 bg-transparent" />
+          <input id="customSetTotalInput" type="number" bind:value={customSetTotal} placeholder="100000" class="flex-1 w-full outline-none text-right font-bold text-slate-800 bg-transparent" />
           <span class="ml-2 text-slate-400 text-sm font-bold whitespace-nowrap">원</span>
         </div>
       </div>
       
       <!-- 세트 수 입력칸 -->
       <div>
-        <label class="block text-sm font-bold text-slate-700 mb-1">나눠야 할 세트 수</label>
+        <label for="customSetCountInput" class="block text-sm font-bold text-slate-700 mb-1">나눠야 할 세트 수</label>
         <div class="flex items-center border border-slate-300 rounded-lg px-4 py-2 bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-colors">
-          <input type="number" bind:value={customSetCount} placeholder="3" class="flex-1 w-full outline-none text-right font-bold text-slate-800 bg-transparent" />
+          <input id="customSetCountInput" type="number" bind:value={customSetCount} placeholder="3" class="flex-1 w-full outline-none text-right font-bold text-slate-800 bg-transparent" />
           <span class="ml-2 text-slate-400 text-sm font-bold whitespace-nowrap">세트</span>
         </div>
       </div>

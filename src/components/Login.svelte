@@ -74,8 +74,9 @@
 
     <div class="space-y-4 text-left">
       <div>
-        <label class="block text-xs font-bold text-slate-500 mb-1">아이디</label>
+        <label for="loginIdInput" class="block text-xs font-bold text-slate-500 mb-1">아이디</label>
         <input
+          id="loginIdInput"
           type="text"
           bind:value={loginId}
           on:keydown={handleKeydown}
@@ -85,8 +86,9 @@
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-500 mb-1">비밀번호</label>
+        <label for="loginPwInput" class="block text-xs font-bold text-slate-500 mb-1">비밀번호</label>
         <input
+          id="loginPwInput"
           type="password"
           bind:value={inputPassword}
           on:keydown={handleKeydown}

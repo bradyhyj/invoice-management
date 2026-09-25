@@ -44,7 +44,8 @@
 
     // 2. 포인트 단위(pointUnit)가 설정되어 있다면 단위에 맞게 절사 (예: 50750 -> 50700)
     if (policyConfig.pointUnit) {
-      limit = Math.floor(limit / policyConfig.pointUnit) * policyConfig.pointUnit;
+      limit =
+        Math.floor(limit / policyConfig.pointUnit) * policyConfig.pointUnit;
     }
 
     // 최종 계산 리턴
@@ -123,9 +124,13 @@
     let noteName = policy.name;
     if (policy.type === "PERCENT_TIER") noteName += `(${selectedTier})`;
 
+    // 결제 수단인 경우 ' 할인'을 붙이지 않음
+    const suffix = policy.isPayment ? "" : " 할인";
+
     onApply({
-      name: noteName + " 할인",
-      amount: -calculatedDiscount, // 💡 뺄셈이 되어야 하므로 마이너스 처리
+      name: noteName + suffix,
+      amount: -calculatedDiscount, // 뺄셈이 되어야 하므로 마이너스 처리
+      isPayment: policy.isPayment,
     });
   }
 </script>
@@ -282,7 +287,7 @@
               <!-- 사용할 포인트 입력 -->
               <div>
                 <div class="flex justify-between items-end mb-2">
-                  <label class="text-sm font-bold text-slate-700"
+                  <label for="pointInputForm" class="text-sm font-bold text-slate-700"
                     >사용할 포인트 입력</label
                   >
                   <button
@@ -301,6 +306,7 @@
 
                 <div class="relative">
                   <input
+                    id="pointInputForm"
                     type="number"
                     bind:value={customValue}
                     placeholder="0"
@@ -341,10 +347,10 @@
           on:click={handleApply}
           disabled={calculatedDiscount <= 0}
           class="px-5 py-2.5 rounded-lg font-bold transition-all duration-200
-            {calculatedDiscount > 0 
-              ? 'bg-red-600 hover:bg-red-700 text-white shadow-md' 
-              : 'bg-red-50 text-red-200 cursor-not-allowed'}"
-        >할인 적용하기</button
+            {calculatedDiscount > 0
+            ? 'bg-red-600 hover:bg-red-700 text-white shadow-md'
+            : 'bg-red-50 text-red-200 cursor-not-allowed'}"
+          >할인 적용하기</button
         >
       </div>
     </div>

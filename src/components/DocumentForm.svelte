@@ -104,10 +104,39 @@
     function handlePrint() {
         window.print();
     }
+
+    let invoiceRef;
+
+    import { onMount } from "svelte";
+    onMount(() => {
+        const handleBeforePrint = () => {
+            if (!invoiceRef) return;
+
+            // 축소 비율 초기화 및 실제 높이 측정을 위해 잠시 설정 변경
+            invoiceRef.style.zoom = "1";
+
+            // 현재 컨텐츠의 실제 높이를 픽셀로 측정
+            const scrollHeight = invoiceRef.scrollHeight;
+
+            // A4 여백 없는 안전 높이 (약 1050px ~ 1080px 정도)
+            const safeHeight = 1050;
+
+            if (scrollHeight > safeHeight) {
+                // 초과한 만큼 비율을 계산하여 전체를 축소시킴
+                const ratio = safeHeight / scrollHeight;
+                // 최소 60%까지만 축소되도록 제한 (너무 작아지는 것 방지)
+                invoiceRef.style.zoom = Math.max(ratio, 0.6).toString();
+            }
+        };
+
+        window.addEventListener("beforeprint", handleBeforePrint);
+        return () =>
+            window.removeEventListener("beforeprint", handleBeforePrint);
+    });
 </script>
 
 <div
-    class="min-h-screen bg-slate-50 p-6 text-slate-800 print:p-0 print:bg-white"
+    class="min-h-screen bg-slate-50 p-6 text-slate-800 print:p-0 print:bg-white print:min-h-0"
 >
     <div class="max-w-4xl mx-auto print:m-0">
         <!-- 상단 툴바 -->
@@ -133,7 +162,8 @@
 
         <!-- 명세서 본문 (A4 규격) -->
         <div
-            class="bg-white p-8 mx-auto w-[210mm] min-h-[297mm] shadow-lg print:shadow-none print:p-6 print:m-0 box-border flex flex-col rounded-sm print:rounded-none overflow-hidden print:min-h-0 print:h-[297mm] invoice-font"
+            bind:this={invoiceRef}
+            class="bg-white p-8 mx-auto w-[210mm] min-h-[297mm] shadow-lg print:shadow-none print:p-6 box-border flex flex-col rounded-sm print:rounded-none overflow-hidden print:min-h-0 print:h-fit invoice-font"
         >
             <!-- 상단 헤더 (제목 & 문서번호) -->
             <div class="flex justify-between items-end mb-3">
@@ -214,7 +244,7 @@
                 <!-- 오른쪽: 공급자 표 -->
                 <div class="flex-shrink-0">
                     <table
-                        class="w-[380px] border-collapse border-2 border-black text-sm text-center bg-white table-fixed"
+                        class="w-[380px] border-collapse border-[3px] border-black text-sm text-center bg-white table-fixed"
                     >
                         <tbody>
                             <tr>
@@ -351,7 +381,7 @@
             <!-- 품목 테이블 -->
             <div class="flex-1 flex flex-col justify-between">
                 <table
-                    class="w-full text-center border-collapse text-sm border-2 border-black table-fixed"
+                    class="w-full h-full text-center border-collapse text-sm border-[3px] border-black table-fixed"
                 >
                     <colgroup>
                         <col class="w-[28%]" />
@@ -366,7 +396,7 @@
                         <tr>
                             <th
                                 colspan="2"
-                                class="border border-black border-b-2 py-2 px-2 text-center bg-gray-200"
+                                class="border border-black border-b-[3px] py-2 px-2 text-center bg-gray-200"
                             >
                                 <div
                                     class="tracking-[0.2em] font-bold text-[14px]"
@@ -381,7 +411,7 @@
                             </th>
                             <th
                                 colspan="4"
-                                class="border border-black border-b-2 py-2 px-2 text-center text-[15px] bg-white"
+                                class="border border-black border-b-[3px] py-2 px-2 text-center text-[15px] bg-white"
                             >
                                 일금 {totalKorean}원整
                                 <span class="font-bold ml-2"
@@ -391,7 +421,7 @@
                                 >
                             </th>
                             <th
-                                class="print:hidden border border-black border-b-2 bg-white w-10"
+                                class="print:hidden border border-black border-b-[3px] bg-white w-10"
                             ></th>
                         </tr>
                         <tr
@@ -442,7 +472,9 @@
                                     <textarea
                                         bind:value={item.name}
                                         disabled={isLocked}
-                                        rows={item.name ? item.name.split('\n').length : 1}
+                                        rows={item.name
+                                            ? item.name.split("\n").length
+                                            : 1}
                                         class="cell-input w-full min-h-[24px] outline-none bg-transparent text-center resize-none disabled:bg-transparent"
                                     ></textarea>
                                 </td>
@@ -451,7 +483,7 @@
                                     할인 적용된 행의 경우 금액만 나타낸다 {#if i !== discountRowIndex }
                                     item의 spec, qty, price에만 조건 달면 됨
                                 -->
-                                <td class="border border-black px-1 h-[29px]">
+                                <td class="border border-black px-1">
                                     {#if i !== discountRowIndex}
                                         <input
                                             type="text"
@@ -461,7 +493,7 @@
                                         />
                                     {/if}
                                 </td>
-                                <td class="border border-black px-1 h-[29px]">
+                                <td class="border border-black px-1">
                                     {#if i !== discountRowIndex}
                                         <input
                                             type="number"
@@ -471,7 +503,7 @@
                                         />
                                     {/if}
                                 </td>
-                                <td class="border border-black px-1 h-[29px]">
+                                <td class="border border-black px-1">
                                     {#if i !== discountRowIndex}
                                         <input
                                             type="number"
@@ -482,7 +514,7 @@
                                         />
                                     {/if}
                                 </td>
-                                <td class="border border-black px-1 h-[29px]">
+                                <td class="border border-black px-1">
                                     <!-- 할인적용 여부 관계없이 item.qty * item.price로 계산하면 됨 -->
                                     <input
                                         type="number"
@@ -497,16 +529,18 @@
                                         class="w-full h-full outline-none bg-transparent text-right font-medium disabled:bg-transparent"
                                     />
                                 </td>
-                                <td class="border border-black px-1 h-[29px]">
+                                <td class="border border-black px-1">
                                     <textarea
                                         bind:value={item.note}
                                         disabled={isLocked}
-                                        rows={item.note ? item.note.split('\n').length : 1}
+                                        rows={item.note
+                                            ? item.note.split("\n").length
+                                            : 1}
                                         class="w-full h-full outline-none bg-transparent text-center text-xs disabled:bg-transparent resize-none"
                                     ></textarea>
                                 </td>
                                 <td
-                                    class="border border-black px-1 h-[29px] text-center print:hidden"
+                                    class="border border-black px-1 text-center print:hidden"
                                 >
                                     <!-- 폼이 잠기지 않았을 때(!isLocked)만 삭제 버튼('x') 나타나게 -->
                                     {#if !isLocked}
@@ -523,7 +557,7 @@
 
                     <tfoot>
                         <tr
-                            class="bg-gray-300 font-bold text-black border-y-2 border-black"
+                            class="bg-gray-300 font-bold text-black border-y-[3px] border-black"
                         >
                             <td
                                 colspan="4"

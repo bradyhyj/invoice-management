@@ -19,7 +19,20 @@ export const discountPolicies = {
       type: "POINT_INPUT", // 고객이 직접 포인트를 입력하는 방식
       minUsage: 1000, // 최소 1000원 이상부터
       maxUsagePercent: 30, // 전액 결제 가능 여부
-      pointUnit: 1, // 포인트 사용 단위
+      pointUnit: 10, // 포인트 사용 단위
+      requiresItemSelection: false, // 💡 품목 선택 없이 총액에서 바로 깎는가? -> O
+      warningMessage: "고객님께 현재 포인트가 얼마나 있는지를 확인해주세요.",
+    },
+
+    {
+      id: "happy_point",
+      name: "해피포인트 사용",
+      buttonColor: "bg-blue-50 text-blue-700",
+      type: "POINT_INPUT", // 고객이 직접 포인트를 입력하는 방식
+      minUsage: 100, // 최소 100원 이상부터
+      maxUsagePercent: 100, // 전액 결제 가능 여부
+      pointUnit: 10, // 포인트 사용 단위
+      isPayment: true, // 💡 일반 할인이 아닌 결제 수단으로 취급 (할인 락 안 걸림)
       requiresItemSelection: false, // 💡 품목 선택 없이 총액에서 바로 깎는가? -> O
       warningMessage: "고객님께 현재 포인트가 얼마나 있는지를 확인해주세요.",
     },
@@ -63,11 +76,11 @@ export const discountPolicies = {
       id: "custom",
       name: "임의할인",
       buttonColor: "bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-300",
-      type: "CUSTOM_MANUAL", 
+      type: "CUSTOM_MANUAL",
       requiresItemSelection: false, // 품목 상관없이 총액에서 바로 차감
       warningMessage: "적용할 할인 금액이나 퍼센트(%)를 입력하세요.",
     }
   ],
-  
-  
+
+
 };

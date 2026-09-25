@@ -3,6 +3,7 @@
   import DocumentForm from "./components/DocumentForm.svelte"; // 만든 공통 컴포넌트 불러오기
   import DiscountModal from "./components/DiscountModal.svelte"; // 할인 공통 컴포넌트 불러오기
   import { discountPolicies } from "./lib/discountConfig.js"; // 할인 정책 JSON 불러오기
+  import { productCategories } from "./lib/productConfig.js"; // 품목 데이터 JSON 불러오기
   import { Disc } from "lucide-svelte";
   import { db } from "./lib/firebase.js";
   import {
@@ -51,7 +52,7 @@
   // 잠금 및 상태 제어 로직
   let discountRowIndex = -1; // 할인이 적용된 빈칸의 인덱스
   let roundingRowIndex = -1; // 끝수 처리가 적용된 인덱스
-  $: isLocked = discountRowIndex !== -1 || roundingRowIndex !== -1;
+  $: isLocked = discountRowIndex !== -1;
 
   function getEmptyRowIndex() {
     return items.findIndex(
@@ -64,12 +65,8 @@
     );
   }
 
-  // 빠른 품목 추가
-  const quickItems = [
-    { name: "비닐쇼핑백", price: 100, isDiscountable: false, note: "" },
-    { name: "종이쇼핑백", price: 200, isDiscountable: false, note: "" },
-    { name: "아메리카노(HOT)", price: 3900, isDiscountable: true, note: "" },
-  ];
+  // 현재 선택된 품목 카테고리 탭
+  let activeCategory = productCategories.length > 0 ? productCategories[0].categoryName : "";
 
   function addQuickItem(qItem) {
     if (isLocked)
@@ -78,18 +75,29 @@
         "error",
       );
 
-    const idx = getEmptyRowIndex();
-    if (idx === -1) return showToast("명세서에 빈 칸이 없습니다.", "error");
+    // 1. 추가하려는 품목이 이미 목록(items)에 존재하는지 이름으로 찾기
+    const existingItemIndex = items.findIndex(item => item.name === qItem.name);
+    
+    if (existingItemIndex !== -1) {
+      // 2. 이미 존재하는 품목이라면 수량(qty)만 1 증가
+      // (DocumentForm.svelte에 정의된 반응성 로직($:)에 의해 amount는 자동 계산됨)
+      items[existingItemIndex].qty = Number(items[existingItemIndex].qty) + 1;
 
-    items[idx] = {
-      name: qItem.name,
-      spec: "EA",
-      qty: 1,
-      price: qItem.price,
-      amount: qItem.price, // 수량*단가로 자동 계산되지만 명시적으로 넣음
-      note: qItem.note,
-      isDiscountable: qItem.isDiscountable,
-    };
+    } else {
+      // 존재하지 않는 경우라면
+      const idx = getEmptyRowIndex();
+      if (idx === -1) return showToast("명세서에 빈 칸이 없습니다.", "error");
+
+      items[idx] = {
+        name: qItem.name,
+        spec: "EA",
+        qty: 1,
+        price: qItem.price,
+        amount: qItem.price, // 수량*단가로 자동 계산되지만 명시적으로 넣음
+        note: qItem.note,
+        isDiscountable: qItem.isDiscountable,
+      };
+    }
     items = [...items]; // Svelte 화면 갱신
   }
 
@@ -98,7 +106,7 @@
   let selectedPolicy = null;
 
   function handleDiscountClick(policy) {
-    if (isLocked)
+    if (isLocked && !policy.isPayment)
       return showToast(
         "이미 다른 할인이 적용되어 있습니다. 먼저 취소해주세요.",
         "error",
@@ -123,12 +131,14 @@
       qty: 1,
       price: discountData.amount,
       amount: discountData.amount,
-      note: "할인적용",
+      note: discountData.isPayment ? "포인트결제" : "할인적용",
       isDiscountable: false,
     };
 
     items = [...items]; // Svelte 갱신
-    discountRowIndex = idx; // 잠금
+    if (!discountData.isPayment) {
+      discountRowIndex = idx; // 일반 할인일 때만 잠금
+    }
     showDiscountModal = false;
   }
 
@@ -491,11 +501,34 @@
     <div class="max-w-4xl mx-auto mt-4 print:hidden space-y-3">
       <!-- 🛍️ 섹션 1: 빠른 품목 추가 -->
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-300">
-        <div class="text-sm font-bold text-slate-700 mb-2">
-          🛍️ 빠른 품목 추가
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-sm font-bold text-slate-700">🛍️ 빠른 품목 추가</div>
+          <button
+            on:click={() => (showCustomSetModal = true)}
+            class="px-3 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs font-bold rounded-lg transition-colors border border-indigo-200"
+          >
+            + 맞춤형 세트 계산기
+          </button>
         </div>
+
+        <!-- 카테고리 탭 -->
+        <div class="flex gap-2 border-b border-slate-200 mb-3 overflow-x-auto">
+          {#each productCategories as category}
+            <button
+              on:click={() => (activeCategory = category.categoryName)}
+              class="px-3 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors {activeCategory ===
+              category.categoryName
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}"
+            >
+              {category.categoryName}
+            </button>
+          {/each}
+        </div>
+
+        <!-- 탭에 해당하는 품목 버튼들 -->
         <div class="flex gap-2 flex-wrap">
-          {#each quickItems as qItem}
+          {#each productCategories.find((c) => c.categoryName === activeCategory)?.items || [] as qItem}
             <button
               on:click={() => addQuickItem(qItem)}
               class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-sm font-medium rounded"
@@ -503,13 +536,6 @@
               + {qItem.name}
             </button>
           {/each}
-
-          <button
-            on:click={() => showCustomSetModal = true}
-            class="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold rounded-lg transition-colors border border-indigo-200"
-          >
-            + 맞춤형 세트 계산기
-        </button>
         </div>
       </div>
 
